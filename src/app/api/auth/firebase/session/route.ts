@@ -37,9 +37,12 @@ export async function POST(request: Request) {
   let decoded;
   try {
     decoded = await adminAuth.verifyIdToken(idToken);
-  } catch {
+  } catch (err) {
+    console.error("[firebase/session] verifyIdToken failed:", err);
     return NextResponse.json(
-      { error: "Invalid or expired token." },
+      {
+        error: `Authentication token rejected: ${(err as Error)?.message || "Invalid or expired token."}`,
+      },
       { status: 401 }
     );
   }
@@ -84,13 +87,13 @@ export async function POST(request: Request) {
     console.error("[firebase/session] failed to create session:", error);
     const detail =
       error instanceof ApiError
-        ? `ApiError(${error.status}) ${error.message}`
+        ? `ApiError(${error.status}): ${error.message}`
         : error instanceof Error
           ? error.message
           : "Unknown error";
     console.error("[firebase/session] detail:", detail);
     return NextResponse.json(
-      { error: "Sign-in failed. Please try again." },
+      { error: `Sign-in session setup failed: ${detail}` },
       { status: 500 }
     );
   }

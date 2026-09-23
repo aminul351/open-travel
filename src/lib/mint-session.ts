@@ -28,8 +28,15 @@ export async function createSessionResponse(
 ) {
   const { cookieName, secure } = sessionCookieName();
 
+  const secret = process.env.AUTH_SECRET?.trim();
+  if (!secret) {
+    throw new Error(
+      "AUTH_SECRET is not configured in Vercel environment variables. Please add AUTH_SECRET to Vercel."
+    );
+  }
+
   const sessionToken = await encode({
-    secret: process.env.AUTH_SECRET ?? "",
+    secret,
     salt: cookieName,
     maxAge: SESSION_MAX_AGE,
     token: {
