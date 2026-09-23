@@ -2,6 +2,9 @@
   "name": "opentravel",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "concurrently -n next,api -c cyan,yellow \"next dev\" \"node --watch server/index.js\"",
     "dev:next": "next dev",
