@@ -28,9 +28,15 @@ export default async function ServicesPage({
   if (activeType) queryParams.set("type", activeType);
   if (activeLocation) queryParams.set("location", activeLocation);
 
-  const { services = [] } = await apiFetch<{ services: ApiServiceDetail[] }>(
-    `/api/services${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
-  );
+  let services: ApiServiceDetail[] = [];
+  try {
+    const data = await apiFetch<{ services: ApiServiceDetail[] }>(
+      `/api/services${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
+    );
+    services = data?.services || [];
+  } catch (err) {
+    console.error("[ServicesPage] Unable to load services from backend:", err);
+  }
 
   const makeTypeHref = (t?: string) => {
     const params = new URLSearchParams();

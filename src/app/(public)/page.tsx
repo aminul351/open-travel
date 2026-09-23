@@ -53,10 +53,18 @@ export default async function HomePage({
   const params = searchParams ? await searchParams : {};
   const location = params?.location?.trim() || "";
 
-  const { services = [], categories = [] } = await apiFetch<{
-    services: ApiServiceDetail[];
-    categories: ApiCategory[];
-  }>(`/api/home${location ? `?location=${encodeURIComponent(location)}` : ""}`);
+  let services: ApiServiceDetail[] = [];
+  let categories: ApiCategory[] = [];
+  try {
+    const data = await apiFetch<{
+      services: ApiServiceDetail[];
+      categories: ApiCategory[];
+    }>(`/api/home${location ? `?location=${encodeURIComponent(location)}` : ""}`);
+    services = data?.services || [];
+    categories = data?.categories || [];
+  } catch (err) {
+    console.error("[HomePage] Unable to load home data from backend:", err);
+  }
 
   return (
     <div className="flex flex-col">

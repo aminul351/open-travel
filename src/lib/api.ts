@@ -2,8 +2,22 @@ import "server-only";
 
 import { auth } from "@/auth";
 
-const API_URL = process.env.API_URL ?? "http://localhost:4000";
+const RAW_API_URL = process.env.API_URL ?? "http://localhost:4000";
+const API_URL = RAW_API_URL.trim().replace(/\/+$/, "");
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? "";
+
+if (process.env.NODE_ENV === "production") {
+  if (!process.env.API_URL) {
+    console.warn(
+      "[api] WARNING: API_URL is not defined in environment variables! Defaulting to http://localhost:4000."
+    );
+  }
+  if (!process.env.INTERNAL_API_KEY) {
+    console.warn(
+      "[api] WARNING: INTERNAL_API_KEY is not defined in environment variables!"
+    );
+  }
+}
 
 export class ApiError extends Error {
   status: number;
@@ -40,12 +54,25 @@ export async function apiFetch<T>(
     headers["x-user-role"] = session.user.role ?? "";
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
-    method: options.method ?? "GET",
-    headers,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-    cache: "no-store",
-  });
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const targetUrl = `${API_URL}${normalizedPath}`;
+
+  let response: Response;
+  try {
+    response = await fetch(targetUrl, {
+      method: options.method ?? "GET",
+      headers,
+      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      cache: "no-store",
+    });
+  } catch (err) {
+    const message = (err as Error)?.message ?? "Unknown network error";
+    console.error(`[apiFetch] Network failure calling ${targetUrl}:`, message);
+    throw new ApiError(
+      502,
+      `Cannot connect to backend API at ${API_URL}. Details: ${message}`
+    );
+  }
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);

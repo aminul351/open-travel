@@ -12,12 +12,19 @@ export const metadata: Metadata = {
   title: "Browse Tours",
   description: "Discover curated tours and packages from trusted travel agencies.",
 };
-
 export default async function ToursPage() {
-  const { tours = [], categories = [] } = await apiFetch<{
-    tours: ApiTour[];
-    categories: ApiCategory[];
-  }>("/api/tours");
+  let tours: ApiTour[] = [];
+  let categories: ApiCategory[] = [];
+  try {
+    const data = await apiFetch<{
+      tours: ApiTour[];
+      categories: ApiCategory[];
+    }>("/api/tours");
+    tours = data?.tours || [];
+    categories = data?.categories || [];
+  } catch (err) {
+    console.error("[ToursPage] Unable to load tours from backend:", err);
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
