@@ -4,6 +4,9 @@ import { apiFetch, ApiError, type ApiUser } from "@/lib/api";
 import { adminAuth, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { createSessionResponse } from "@/lib/mint-session";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 type SessionRequest = {
   idToken?: string;
   name?: string;
@@ -11,12 +14,20 @@ type SessionRequest = {
   role?: string;
 };
 
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    route: "/api/auth/firebase/session",
+    firebaseAdminConfigured: isFirebaseAdminConfigured,
+  });
+}
+
 export async function POST(request: Request) {
   if (!isFirebaseAdminConfigured) {
     return NextResponse.json(
       {
         error:
-          "Firebase admin is not configured. Set FIREBASE_SERVICE_ACCOUNT or GOOGLE_APPLICATION_CREDENTIALS.",
+          "Firebase admin is not configured. Set FIREBASE_SERVICE_ACCOUNT or GOOGLE_APPLICATION_CREDENTIALS in Vercel Environment Variables.",
       },
       { status: 503 }
     );
@@ -73,7 +84,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return createSessionResponse(
+    return await createSessionResponse(
       { ok: true, isNewUser, role: user.role },
       {
         id: user.id,

@@ -30,8 +30,15 @@ export function GoogleSignInButton() {
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "Google sign-in failed. Please try again.");
+        const rawText = await res.text().catch(() => "");
+        let errorMsg = "";
+        try {
+          const parsed = JSON.parse(rawText);
+          errorMsg = parsed.error;
+        } catch {
+          errorMsg = rawText;
+        }
+        setError(errorMsg || `Google sign-in failed (status ${res.status}). Please try again.`);
         return;
       }
 

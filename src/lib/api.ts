@@ -40,7 +40,12 @@ export async function apiFetch<T>(
   path: string,
   options: ApiOptions = {}
 ): Promise<T> {
-  const session = await auth();
+  let session = null;
+  try {
+    session = await auth();
+  } catch {
+    // Unauthenticated context or Route Handler call - proceed without user session headers
+  }
 
   const headers: Record<string, string> = {
     "x-internal-key": INTERNAL_API_KEY,
