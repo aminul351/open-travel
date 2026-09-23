@@ -13,7 +13,9 @@ export type MintUser = {
 
 export function sessionCookieName() {
   const baseUrl = process.env.AUTH_URL;
-  const secure = baseUrl ? baseUrl.startsWith("https://") : false;
+  const secure = baseUrl
+    ? baseUrl.startsWith("https://")
+    : process.env.NODE_ENV === "production";
   return {
     cookieName: `${secure ? "__Secure-" : ""}authjs.session-token`,
     secure,

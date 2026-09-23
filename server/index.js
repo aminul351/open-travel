@@ -30,8 +30,9 @@ async function start() {
   app.use("/api/chat", requireUser, chatRoutes);
 
   const port = Number(process.env.PORT) || 4000;
-  app.listen(port, () => {
-    console.log(`[server] API listening on http://localhost:${port}`);
+  const host = process.env.HOST || "0.0.0.0";
+  app.listen(port, host, () => {
+    console.log(`[server] API listening on http://${host}:${port}`);
   });
 
   return app;
