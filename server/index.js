@@ -16,6 +16,9 @@ async function start() {
   const app = express();
   app.use(express.json());
 
+  app.get("/", (req, res) =>
+    res.json({ name: "Open Travel API", status: "running", health: "/api/health" })
+  );
   app.get("/api/health", (req, res) => res.json({ ok: true }));
 
   app.use("/api", assertInternal);
