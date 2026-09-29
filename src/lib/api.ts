@@ -31,6 +31,8 @@ export class ApiError extends Error {
 type ApiOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
+  timeoutMs?: number;
+  cache?: RequestCache;
 };
 
 // Client for the Express backend. Only callable from server components and
@@ -61,6 +63,7 @@ export async function apiFetch<T>(
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const targetUrl = `${API_URL}${normalizedPath}`;
+  const timeoutMs = options.timeoutMs ?? 5000;
 
   let response: Response;
   try {
@@ -68,13 +71,19 @@ export async function apiFetch<T>(
       method: options.method ?? "GET",
       headers,
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-      cache: "no-store",
+      cache: options.cache ?? "no-store",
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (err) {
-    const message = (err as Error)?.message ?? "Unknown network error";
-    console.error(`[apiFetch] Network failure calling ${targetUrl}:`, message);
+    const isTimeout =
+      (err as Error)?.name === "TimeoutError" ||
+      (err as Error)?.name === "AbortError";
+    const message = isTimeout
+      ? `Request timed out after ${timeoutMs}ms (backend API is cold-starting or unavailable)`
+      : ((err as Error)?.message ?? "Unknown network error");
+    console.warn(`[apiFetch] Network failure calling ${targetUrl}:`, message);
     throw new ApiError(
-      502,
+      isTimeout ? 504 : 502,
       `Cannot connect to backend API at ${API_URL}. Details: ${message}`
     );
   }

@@ -19,11 +19,11 @@ export default async function ToursPage() {
     const data = await apiFetch<{
       tours: ApiTour[];
       categories: ApiCategory[];
-    }>("/api/tours");
+    }>("/api/tours", { timeoutMs: 3500 });
     tours = data?.tours || [];
     categories = data?.categories || [];
   } catch (err) {
-    console.error("[ToursPage] Unable to load tours from backend:", err);
+    console.warn("[ToursPage] Unable to load tours from backend:", err);
   }
 
   return (

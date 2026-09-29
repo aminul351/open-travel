@@ -31,11 +31,12 @@ export default async function ServicesPage({
   let services: ApiServiceDetail[] = [];
   try {
     const data = await apiFetch<{ services: ApiServiceDetail[] }>(
-      `/api/services${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
+      `/api/services${queryParams.toString() ? `?${queryParams.toString()}` : ""}`,
+      { timeoutMs: 3500 }
     );
     services = data?.services || [];
   } catch (err) {
-    console.error("[ServicesPage] Unable to load services from backend:", err);
+    console.warn("[ServicesPage] Unable to load services from backend:", err);
   }
 
   const makeTypeHref = (t?: string) => {
