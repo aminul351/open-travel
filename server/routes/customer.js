@@ -36,17 +36,34 @@ router.get("/dashboard", async (req, res) => {
     .sort({ createdAt: -1 })
     .toArray();
 
-  for (const booking of bookings) {
-    const service = await db
-      .collection("services")
-      .findOne({ _id: OID(booking.serviceId) });
-    if (service) {
-      const agency = await db
-        .collection("agencies")
-        .findOne({ _id: OID(service.agencyId) }, { projection: { name: 1 } });
-      service.agency = agency ?? null;
+  if (bookings.length > 0) {
+    const serviceIds = [...new Set(bookings.map((b) => OID(b.serviceId)).filter(Boolean))];
+    const services = serviceIds.length
+      ? await db
+          .collection("services")
+          .find({ _id: { $in: serviceIds } })
+          .toArray()
+      : [];
+
+    const agencyIds = [...new Set(services.map((s) => OID(s.agencyId)).filter(Boolean))];
+    const agencies = agencyIds.length
+      ? await db
+          .collection("agencies")
+          .find({ _id: { $in: agencyIds } }, { projection: { name: 1 } })
+          .toArray()
+      : [];
+
+    const agencyMap = new Map(agencies.map((a) => [a._id.toHexString(), a]));
+    const serviceMap = new Map(
+      services.map((s) => {
+        const agency = s.agencyId ? agencyMap.get(s.agencyId) || null : null;
+        return [s._id.toHexString(), { ...s, agency }];
+      })
+    );
+
+    for (const booking of bookings) {
+      booking.service = serviceMap.get(String(booking.serviceId)) ?? null;
     }
-    booking.service = service ?? null;
   }
 
   res.json({

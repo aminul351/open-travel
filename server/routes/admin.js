@@ -34,12 +34,19 @@ router.get("/dashboard", async (req, res) => {
     .limit(5)
     .toArray();
 
-  for (const review of pendingReviews) {
-    const tour = await db
-      .collection("tours")
-      .findOne({ _id: OID(review.packageId) }, { projection: { title: 1 } });
-    review.tourPackage = tour ?? null;
-    delete review.packageId;
+  if (pendingReviews.length > 0) {
+    const packageIds = [...new Set(pendingReviews.map((r) => OID(r.packageId)).filter(Boolean))];
+    const tours = packageIds.length
+      ? await db
+          .collection("tours")
+          .find({ _id: { $in: packageIds } }, { projection: { title: 1 } })
+          .toArray()
+      : [];
+    const tourMap = new Map(tours.map((t) => [t._id.toHexString(), t]));
+    for (const review of pendingReviews) {
+      review.tourPackage = tourMap.get(String(review.packageId)) ?? null;
+      delete review.packageId;
+    }
   }
 
   const revenue = paidBookings.reduce(
@@ -67,17 +74,21 @@ router.get("/agencies", async (req, res) => {
     .sort({ createdAt: -1 })
     .toArray();
 
-  const withOwners = await Promise.all(
-    agencies.map(async (agency) => {
-      const owner = await db
+  const userIds = [...new Set(agencies.map((a) => OID(a.userId)).filter(Boolean))];
+  const users = userIds.length
+    ? await db
         .collection("users")
-        .findOne(
-          { _id: OID(agency.userId) },
+        .find(
+          { _id: { $in: userIds } },
           { projection: { name: 1, email: 1 } }
-        );
-      return { ...agency, owner: owner ?? null };
-    })
-  );
+        )
+        .toArray()
+    : [];
+  const userMap = new Map(users.map((u) => [u._id.toHexString(), u]));
+  const withOwners = agencies.map((agency) => ({
+    ...agency,
+    owner: userMap.get(String(agency.userId)) ?? null,
+  }));
 
   res.json({ agencies: serialize(withOwners) });
 });

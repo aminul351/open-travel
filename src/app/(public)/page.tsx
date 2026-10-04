@@ -469,17 +469,12 @@ export default async function HomePage({
           <div className="relative z-10 flex min-h-[580px] sm:min-h-[640px] lg:min-h-[700px] flex-col justify-between p-6 sm:p-10 lg:p-14">
             {/* Top row: Trust Badge & Status */}
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur-md">
-                <Sparkles className="size-3.5 text-amber-300 animate-pulse" />
-                <span>Verified Global Travel Marketplace</span>
-                <span className="text-white/40">·</span>
-                <span className="text-sky-300 font-bold">2026 Edition</span>
-              </div>
+             
 
-              <div className="hidden sm:inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-medium text-white shadow-sm backdrop-blur-md">
+              {/* <div className="hidden sm:inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-medium text-white shadow-sm backdrop-blur-md">
                 <ShieldCheck className="size-3.5 text-emerald-400" />
                 <span>100% Accredited Operators</span>
-              </div>
+              </div> */}
             </div>
 
             {/* Hero Main Body: Headline, Subtitle & Elevated Search Console */}

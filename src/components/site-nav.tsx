@@ -25,9 +25,7 @@ export async function SiteNav() {
           <div className="flex flex-col">
             <span className="font-extrabold tracking-tight text-foreground text-lg leading-tight flex items-center gap-1.5">
               Open Travel
-              <span className="hidden sm:inline-flex rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-semibold text-primary">
-                PRO
-              </span>
+              
             </span>
             <span className="text-[10px] font-medium text-muted-foreground tracking-wide uppercase">
               Global Marketplace

@@ -56,34 +56,48 @@ router.get("/dashboard", async (req, res) => {
   if (!agency) return error(res, 404, "Agency profile not found. Complete agency registration first.");
 
   const agencyId = agency._id.toHexString();
-  const services = await db
-    .collection("services")
-    .find({ agencyId })
-    .sort({ createdAt: -1 })
-    .toArray();
+  const [services, bookings] = await Promise.all([
+    db.collection("services").find({ agencyId }).sort({ createdAt: -1 }).toArray(),
+    db.collection("bookings").find({ agencyId }).sort({ createdAt: -1 }).toArray(),
+  ]);
 
-  const bookings = await db
-    .collection("bookings")
-    .find({ agencyId })
-    .sort({ createdAt: -1 })
-    .toArray();
+  if (bookings.length > 0) {
+    const serviceIds = [...new Set(bookings.map((b) => OID(b.serviceId)).filter(Boolean))];
+    const customerIds = [...new Set(bookings.map((b) => OID(b.customerId)).filter(Boolean))];
 
-  for (const booking of bookings) {
-    const service = await db.collection("services").findOne(
-      { _id: OID(booking.serviceId) },
-      { projection: { title: 1, slug: 1 } }
+    const [serviceDocs, customerDocs] = await Promise.all([
+      serviceIds.length
+        ? db
+            .collection("services")
+            .find({ _id: { $in: serviceIds } }, { projection: { title: 1, slug: 1 } })
+            .toArray()
+        : [],
+      customerIds.length
+        ? db.collection("customer_profiles").find({ _id: { $in: customerIds } }).toArray()
+        : [],
+    ]);
+
+    const userIds = [...new Set(customerDocs.map((c) => OID(c.userId)).filter(Boolean))];
+    const userDocs = userIds.length
+      ? await db
+          .collection("users")
+          .find({ _id: { $in: userIds } }, { projection: { name: 1, email: 1 } })
+          .toArray()
+      : [];
+
+    const serviceMap = new Map(serviceDocs.map((s) => [s._id.toHexString(), s]));
+    const userMap = new Map(userDocs.map((u) => [u._id.toHexString(), u]));
+    const customerMap = new Map(
+      customerDocs.map((c) => {
+        const user = c.userId ? userMap.get(c.userId) || null : null;
+        return [c._id.toHexString(), { ...c, user }];
+      })
     );
-    booking.service = service ?? null;
-    const customer = await db
-      .collection("customer_profiles")
-      .findOne({ _id: OID(booking.customerId) });
-    if (customer) {
-      const user = await db
-        .collection("users")
-        .findOne({ _id: OID(customer.userId) }, { projection: { name: 1, email: 1 } });
-      customer.user = user ?? null;
+
+    for (const booking of bookings) {
+      booking.service = serviceMap.get(String(booking.serviceId)) ?? null;
+      booking.customer = customerMap.get(String(booking.customerId)) ?? null;
     }
-    booking.customer = customer ?? null;
   }
 
   res.json({

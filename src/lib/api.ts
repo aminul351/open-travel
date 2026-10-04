@@ -63,7 +63,7 @@ export async function apiFetch<T>(
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const targetUrl = `${API_URL}${normalizedPath}`;
-  const timeoutMs = options.timeoutMs ?? 5000;
+  const timeoutMs = options.timeoutMs ?? 15000;
 
   let response: Response;
   try {
